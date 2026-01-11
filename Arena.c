@@ -61,9 +61,6 @@ uintptr_t align_forward(uintptr_t ptr, size_t align) {
 
     uintptr_t a = (uintptr_t)align; 
 
-    printf("Memory address before alignment: %lu\n", (uintptr_t)ptr); 
-    printf("Alignment: %lu\n", a); 
-
     uintptr_t modulo = (uintptr_t)ptr & (a - 1);  
 
     /* 
@@ -75,12 +72,9 @@ uintptr_t align_forward(uintptr_t ptr, size_t align) {
         reminder = 5
     */ 
     
-    printf("Modulo %lu\n", modulo); 
     if (modulo != 0) {
         ptr += a - modulo;  
     } 
-
-    printf("Memory address after alignment: %lu\n", (uintptr_t)ptr); 
 
     /* return (ptr + align - 1) & ~(align - 1); Production type code */ 
     return ptr; 
@@ -92,15 +86,17 @@ void* push(Arena *self, size_t len, size_t alignment) {
 
     aligned_offset -= (uintptr_t)self->ptr; 
 
+    printf("Aligned extra bytes: %lu\n", aligned_offset); 
+
     if (self->capacity <= self->offset + aligned_offset + len)    
         return NULL; 
+
+    printf("Aligned extra bytes total: %lu\n", aligned_offset + len); 
 
     void *ptr = self->ptr + aligned_offset; 
     memset(ptr, 0, len); 
 
-    printf("Memory location after pushing test: %p \n", (void*)ptr);
-
-    self->offset += aligned_offset + len; 
+    self->offset = aligned_offset + len; 
 
     return ptr;  
 } 
@@ -116,6 +112,8 @@ void dealloc_aren(Arena *self) {
 } 
 
 void tests() {
+
+    // Test 1 - Allocation of first 7 bytes 
     Arena arena = alloc_aren(); 
 
     printf("Allocated Size: %zu \n", arena.offset); 
@@ -124,19 +122,29 @@ void tests() {
     assert(arena.capacity == (size_t)getpagesize());
 
     printf("Memory location before pushing: %p \n", (void*)arena.ptr);
-    void* ptr_offset = push(&arena, 10, DEFAULT_ALIGNMENT); 
+    void* ptr_offset = push(&arena, 7, DEFAULT_ALIGNMENT); 
 
     assert((uintptr_t)ptr_offset % DEFAULT_ALIGNMENT == 0); 
-    printf("Is pwr 2: %d\n", is_pwr_2);
 
 
     printf("Memory location after pushing: %p \n", (void*)ptr_offset);
     printf("Allocated Size: %zu \n", arena.offset); 
 
+    // Test 2 - Allocation of next 7 bytes
+    printf("Memory location before pushing: %p \n", (void*)arena.ptr);
+    void* ptr_2_offset = push(&arena, 7, DEFAULT_ALIGNMENT); 
+
+    assert((uintptr_t)ptr_2_offset % DEFAULT_ALIGNMENT == 0); 
+
+    printf("Memory location after pushing: %p \n", (void*)ptr_2_offset);
+    printf("Allocated Size: %zu \n", arena.offset); 
+
     dealloc_aren(&arena); 
 } 
 
-void test_align_memory(Arena *self) {} 
+void test_align_memory(Arena *self) {
+    
+} 
 
 int main(void) {
     tests(); 
