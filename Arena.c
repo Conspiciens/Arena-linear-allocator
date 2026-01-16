@@ -21,6 +21,7 @@
 typedef struct {
     void *ptr; 
     size_t capacity; 
+    size_t prev_offset;
     size_t offset;
 } Arena;  
 
@@ -104,12 +105,45 @@ void* push(Arena *self, size_t len, size_t alignment) {
 
 void pop(Arena *self) {} 
 
+void *arena_resize(Arena *self, void *old_mem, size_t prev_len, size_t len, size_t alignment) {
+
+    if (old_mem == NULL || prev_len == 0) {
+        return push(self, len, alignment); 
+    } else if (self->ptr <= old_mem && self->ptr + self->capacity > old_mem) {
+
+        /* Checking whether the prev offset is equal to the old memory */ 
+        if (self->ptr + self->prev_offset == old_mem) { 
+            self->offset = self->prev_offset + len; 
+        
+            /* if the len is greater than the previous allocated memory than expand by the difference */ 
+            if (len > prev_len)
+                memset(self->ptr + self->offset, 0, len - prev_len); 
+
+            return old_mem; 
+       } else {
+            void *new_mem = push(self, len, alignment); 
+            size_t copy_size = prev_len < len ? prev_len : len; 
+            
+            memmove(new_mem, old_mem, copy_size); 
+            return new_mem; 
+       }  
+    } else {
+        printf("Error");
+        return NULL;
+    }  
+} 
+
 void dealloc_aren(Arena *self) {
     int flag = munmap(self->ptr, self->capacity); 
     if (flag == -1) {
         printf("Failed to dellocate\n"); 
         exit(1); 
-    }  
+    } 
+
+    self->ptr = NULL; 
+    self->offset = 0; 
+    self->prev_offset = 0; 
+    self->capacity = 0; 
 } 
 
 void tests() {
