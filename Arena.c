@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h> 
 #include <limits.h> 
+#include <sys/types.h> 
 #include <sys/mman.h> 
 #include <stddef.h> 
 #include <stdbool.h> 
@@ -25,7 +26,7 @@ typedef struct {
     size_t offset;
 } Arena;  
 
-Arena alloc_aren() {
+Arena alloc_arena() {
    int page_size = getpagesize(); 
    size_t page_len = (size_t)page_size; 
 
@@ -37,7 +38,7 @@ Arena alloc_aren() {
    void *ptr = mmap(NULL, page_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0); 
    if (ptr == MAP_FAILED) {  
         printf("Error occured in sysconf"); 
-        exit(1); 
+        exit(0); 
    } 
 
    return (Arena) {
@@ -73,6 +74,7 @@ uintptr_t align_forward(uintptr_t ptr, size_t align) {
     */ 
     
     if (modulo != 0) {
+        perror("Issues resizing"); 
         // 16 - bytes left to align to the next alignment of 16 bytes 
         ptr += a - modulo;  
     } 
@@ -128,16 +130,16 @@ void *arena_resize(Arena *self, void *old_mem, size_t prev_len, size_t len, size
             return new_mem; 
        }  
     } else {
-        printf("Error");
+        perror("Issues resizing"); 
         return NULL;
     }  
 } 
 
-void dealloc_aren(Arena *self) {
+void dealloc_arena(Arena *self) {
     int flag = munmap(self->ptr, self->capacity); 
     if (flag == -1) {
         printf("Failed to dellocate\n"); 
-        exit(1); 
+        exit(0); 
     } 
 
     self->ptr = NULL; 
@@ -149,7 +151,7 @@ void dealloc_aren(Arena *self) {
 void tests() {
 
     // Test 1 - Allocation of first 7 bytes 
-    Arena arena = alloc_aren(); 
+    Arena arena = alloc_arena(); 
 
     printf("Allocated Size: %zu \n", arena.offset); 
 
@@ -174,7 +176,7 @@ void tests() {
     printf("Memory location after pushing: %p \n", (void*)ptr_2_offset);
     printf("Allocated Size: %zu \n", arena.offset); 
 
-    dealloc_aren(&arena); 
+    dealloc_arena(&arena); 
 } 
 
 void test_align_memory(Arena *self) {
