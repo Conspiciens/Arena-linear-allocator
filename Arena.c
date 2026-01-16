@@ -12,7 +12,7 @@
 /* https://www.gingerbill.org/article/2019/02/08/memory-allocation-strategies-002/ */
 
 /* 
-    16 bytes as the size of bytes is 8 bytes, however this is our default alignment 
+   16 bytes is the default alignment, a ptr in a 64 bit system is 8 bytes 
 */ 
 #ifndef DEFAULT_ALIGNMENT 
 #define DEFAULT_ALIGNMENT (2 * sizeof(void *))
@@ -60,7 +60,6 @@ uintptr_t align_forward(uintptr_t ptr, size_t align) {
     assert(is_aligned_memory((uintptr_t)align) == true); 
 
     uintptr_t a = (uintptr_t)align; 
-
     uintptr_t modulo = (uintptr_t)ptr & (a - 1);  
 
     /* 
@@ -73,6 +72,7 @@ uintptr_t align_forward(uintptr_t ptr, size_t align) {
     */ 
     
     if (modulo != 0) {
+        // 16 - bytes left to align to the next alignment of 16 bytes 
         ptr += a - modulo;  
     } 
 
@@ -84,6 +84,7 @@ void* push(Arena *self, size_t len, size_t alignment) {
     uintptr_t curr_ptr_addr = (uintptr_t)self->ptr + (uintptr_t)self->offset;
     uintptr_t aligned_offset = align_forward(curr_ptr_addr, alignment); 
 
+    // We get the ptr in the aligned offset, so we subtract (aligned_offset - self->ptr) to get the amount of bytes required to move 
     aligned_offset -= (uintptr_t)self->ptr; 
 
     printf("Aligned extra bytes: %lu\n", aligned_offset); 
