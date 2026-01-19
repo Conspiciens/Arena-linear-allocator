@@ -33,10 +33,15 @@ impl Arena {
     } 
 
     pub fn allocate_mem(&mut self, len: usize) -> Option<&mut [u8]>{
-        if let Some(mut_ptr) = self.ptr.get_mut(self.offset..len) {
+        if self.offset + len > self.capacity {
+            return None
+        } 
+
+        if let Some(mut_ptr) = self.ptr.get_mut(self.offset..self.offset + len) {
             self.offset += len; 
             return Some(mut_ptr); 
         } 
+
         None
     } 
 
@@ -85,7 +90,20 @@ mod tests {
         println!("Mem size: {}", mem_size); 
         println!("Mut Ptr: {}", sec_mut_ptr as usize); 
         assert_eq!(total_mem_size, 9, "Memory should be allocated to 9 bytes as the default alignment is 16!"); 
-        
+    } 
+
+    #[test] 
+    fn test_if_capacity_maxed() {
+        let mut arena = Arena::new(); 
+
+        let opt_ptr = arena.allocate_mem(16384); 
+        let mut mut_ptr = match opt_ptr {
+            Some(mut_ptr) => mut_ptr.as_mut_ptr(),
+            None => panic!("Error occured when getting ptr"), 
+        }; 
+
+        let sec_opt_ptr = arena.allocate_mem(7); 
+        assert_eq!(sec_opt_ptr, None, "Unable to use memory allocated, since the page is full!"); 
     } 
 
     #[test]
