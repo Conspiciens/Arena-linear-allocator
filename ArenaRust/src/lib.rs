@@ -1,7 +1,11 @@
 mod sysgetconf;  
 
 use std::ptr; 
+use std::mem; 
 use memmap2::MmapMut; 
+
+const DEFAULT_ALIGNMENT: usize = std::mem
+    ::size_of::<*const u8>() * 2; 
 
 struct Arena {
     ptr: MmapMut, 
@@ -9,7 +13,7 @@ struct Arena {
     capacity: usize, 
 } 
 
-impl Arena{
+impl Arena {
     pub fn new() -> Self {
         let page_size = sysgetconf::get_page_size(); 
         let map = MmapMut::map_anon(page_size); 
@@ -35,6 +39,19 @@ impl Arena{
         } 
         None
     } 
+
+    pub fn alignment(mut ptr: usize, alignment: usize) -> usize {
+       let a = alignment; 
+       let modulo = ptr & (a - 1);  
+
+       println!("Modulo: {}", modulo);
+
+       if modulo != 0 {
+            ptr += a - modulo; 
+       } 
+
+       return ptr; 
+    } 
 } 
 
 
@@ -42,6 +59,34 @@ impl Arena{
 mod tests {
     use super::*;
     use sysgetconf;  
+
+    #[test] 
+    fn default_alignment() {
+        assert_eq!(DEFAULT_ALIGNMENT, 16, "Default Alignment is 16 bytes for ARM64"); 
+    } 
+
+    #[test]
+    fn test_mem_alignment() {
+        let mut arena = Arena::new(); 
+        let opt_ptr = arena.allocate_mem(7); 
+        let mut mut_ptr = match opt_ptr {
+            Some(mut_ptr) => mut_ptr.as_mut_ptr(),
+            None => panic!("Error occured when getting ptr"), 
+        }; 
+
+        let sec_opt_ptr = arena.allocate_mem(7); 
+        let mut sec_mut_ptr = match sec_opt_ptr {
+            Some(mut_ptr) => mut_ptr.as_mut_ptr(),
+            None => panic!("Error occured when getting ptr"), 
+        }; 
+
+        let mem_size = Arena::alignment(sec_mut_ptr as usize, DEFAULT_ALIGNMENT); 
+        let total_mem_size = mem_size - (sec_mut_ptr as usize); 
+        println!("Mem size: {}", mem_size); 
+        println!("Mut Ptr: {}", sec_mut_ptr as usize); 
+        assert_eq!(total_mem_size, 9, "Memory should be allocated to 9 bytes as the default alignment is 16!"); 
+        
+    } 
 
     #[test]
     fn init_Arena() {
@@ -72,4 +117,5 @@ mod tests {
         println!("Ptr: {:?}", sec_mut_ptr); 
        
     } 
+
 }
