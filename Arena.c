@@ -52,6 +52,27 @@ bool is_aligned_memory(uintptr_t ptr_addr) {
     return (ptr_addr & (ptr_addr - 1)) == 0; 
 } 
 
+void resize_map(Arena *self, void *prev_map) {
+   int page_size = getpagesize(); 
+   size_t new_page_len = self->capacity + (size_t)page_size; 
+
+   if (page_size == -1) {
+        printf("Error occured in sysconf"); 
+        exit(0); 
+   }  
+
+   void *new_ptr = mmap(NULL, new_page_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0); 
+   if (ptr == MAP_FAILED) {  
+        printf("Error occured in sysconf"); 
+        exit(0); 
+   } 
+
+   memove(new_ptr, self->ptr, self->capacity); 
+
+   self->ptr = new_ptr; 
+   self->capacity = new_page_len; 
+} 
+
 /* We move the pointer to the next aligned memory addr */ 
 uintptr_t align_forward(uintptr_t ptr, size_t align) {
     // 16 - 2 * 2 * 2 * 2
