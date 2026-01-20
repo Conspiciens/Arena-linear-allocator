@@ -52,7 +52,7 @@ bool is_aligned_memory(uintptr_t ptr_addr) {
     return (ptr_addr & (ptr_addr - 1)) == 0; 
 } 
 
-void resize_map(Arena *self, void *prev_map) {
+void resize_map(Arena *self) {
    int page_size = getpagesize(); 
    size_t new_page_len = self->capacity + (size_t)page_size; 
 
