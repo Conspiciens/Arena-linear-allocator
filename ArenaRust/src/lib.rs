@@ -24,8 +24,8 @@ impl Arena {
                 ptr::null_mut(), 
                 page_size,  
                 PROT_READ | PROT_WRITE, 
-                MAP_SHARED, 
-                MAP_ANONYMOUS,
+                MAP_SHARED | MAP_ANONYMOUS, 
+                -1, 
                 0  
             ) 
         }; 
@@ -101,15 +101,17 @@ mod tests {
         let opt_ptr = arena.allocate_mem(16384); 
         let mut mut_ptr = opt_ptr.unwrap(); 
 
-        assert_eq!(arena.capacity, 16384, "Unable to use memory allocated, since the page is full!"); 
+        let sec_ptr = arena.allocate_mem(8); 
+
+        assert_eq!(Some(sec_ptr), Some(None), "Unable to use memory allocated, since the page is full!"); 
     } 
 
     #[test]
-    fn init_Arena() {
+    fn alloc_arena() {
+        let mut arena = Arena::new(); 
+        let opt_ptr = arena.allocate_mem(8); 
+        
+        let mut ptr = opt_ptr.unwrap(); 
+        assert_eq!(ptr.len(), 8, "Slice should be equal to memory allocated"); 
     }
-
-    #[test]
-    fn alloc_Arena() {
-    } 
-
 }
