@@ -113,7 +113,7 @@ void* push(Arena *self, size_t len, size_t alignment) {
 
     printf("Aligned extra bytes: %lu\n", aligned_offset); 
 
-    if (self->capacity <= self->offset + aligned_offset + len)    
+    if (self->capacity <= aligned_offset + len)    
         return NULL; 
 
     printf("Aligned extra bytes total: %lu\n", aligned_offset + len); 

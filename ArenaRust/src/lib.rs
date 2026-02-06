@@ -45,17 +45,17 @@ impl Arena {
         let cur_ptr = self.ptr as usize + self.offset;  
         let align_ptr = Arena::alignment(cur_ptr as *mut u8, DEFAULT_ALIGNMENT);         
 
-        let bytes_size: usize = unsafe {  align_ptr.offset_from(cur_ptr as *const u8) as usize }; 
+        let bytes_size: usize = unsafe { align_ptr.offset_from(cur_ptr as *const u8) as usize }; 
 
-        if self.offset + bytes_size + len > self.capacity {
+        if bytes_size + len > self.capacity {
             return None
         } 
     
         let mut mut_ptr = unsafe {
-            std::slice::from_raw_parts_mut(self.ptr.add(self.offset), len)
+            std::slice::from_raw_parts_mut(self.ptr.add(bytes_size), len)
         };     
 
-        self.offset += bytes_size +  len; 
+        self.offset = bytes_size + len; 
         Some(mut_ptr)
     } 
 
