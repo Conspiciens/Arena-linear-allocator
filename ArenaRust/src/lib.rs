@@ -42,7 +42,12 @@ impl Arena {
     } 
 
     pub fn allocate_mem(&mut self, len: usize) -> Option<&mut [u8]> {
-        if self.offset + len > self.capacity {
+        let cur_ptr = self.ptr as usize + self.offset;  
+        let align_ptr = Arena::alignment(cur_ptr as *mut u8, DEFAULT_ALIGNMENT);         
+
+        let bytes_size: usize = unsafe {  align_ptr.offset_from(cur_ptr as *const u8) as usize }; 
+
+        if self.offset + bytes_size + len > self.capacity {
             return None
         } 
     
@@ -50,7 +55,7 @@ impl Arena {
             std::slice::from_raw_parts_mut(self.ptr.add(self.offset), len)
         };     
 
-        self.offset += len; 
+        self.offset += bytes_size +  len; 
         Some(mut_ptr)
     } 
 
@@ -101,7 +106,7 @@ mod tests {
 
         println!("Offset: {}", offset); 
 
-        assert_eq!(offset, 9, "Alignment should add an additional 8 bytes"); 
+        assert_eq!(offset, 9, "Alignment should add an additional 9 bytes"); 
     } 
 
     #[test] 
