@@ -10,7 +10,7 @@ const DEFAULT_ALIGNMENT: usize = std::mem
     ::size_of::<*const u8>() * 2; 
 
 struct Arena {
-    ptr: *mut usize, 
+    ptr: *mut u8, 
     offset: usize, 
     capacity: usize, 
 } 
@@ -35,38 +35,42 @@ impl Arena {
         } 
 
         Arena {
-            ptr: mut_ptr as *mut usize,  
+            ptr: mut_ptr as *mut u8,  
             offset: 0, 
             capacity: page_size,
         }
     } 
 
-    pub fn allocate_mem(&mut self, len: usize) -> Option<&mut [usize]> {
+    pub fn allocate_mem(&mut self, len: usize) -> Option<&mut [u8]> {
         if self.offset + len > self.capacity {
             return None
         } 
-
-        let mut mut_ptr; 
-        unsafe {
-            mut_ptr = std::slice::from_raw_parts_mut(self.ptr, len); 
-        }        
+    
+        let mut mut_ptr = unsafe {
+            std::slice::from_raw_parts_mut(self.ptr.add(self.offset), len)
+        };     
 
         self.offset += len; 
         Some(mut_ptr)
     } 
 
-    pub fn alignment(ptr: *mut usize, alignment: usize) -> *mut usize {
-       let mut ptr_mem = ptr as usize; 
+
+    pub fn alignment(ptr: *mut u8, alignment: usize) -> *mut u8{
+       let mut ptr_addr = ptr as usize; 
+       println!("ptr mem: {:?}", ptr_addr); 
        let a = alignment; 
-       let modulo = ptr_mem & (a - 1);  
+       let modulo = ptr_addr & (a - 1);  
 
        println!("Modulo: {}", modulo);
 
        if modulo != 0 {
-            ptr_mem += a - modulo; 
+            ptr_addr += a - modulo; 
        } 
+       println!("ptr mem: {:?}", ptr_addr); 
 
-       return ptr; 
+       unsafe {
+           return ptr_addr as *mut u8; 
+       }
     } 
 } 
 
@@ -84,14 +88,20 @@ mod tests {
     #[test]
     fn test_mem_alignment() {
         let mut arena = Arena::new(); 
-        let opt_ptr = arena.allocate_mem(7); 
-        let mut mut_ptr = opt_ptr.unwrap(); 
+        let first_ptr = arena.allocate_mem(7).unwrap(); 
+        let sec_ptr = arena.allocate_mem(7).unwrap();
 
-        let sec_opt_ptr = arena.allocate_mem(7).unwrap(); 
+        let mem_size = Arena::alignment(sec_ptr.as_mut_ptr(), DEFAULT_ALIGNMENT); 
+        println!("Mem Ptr: {:?}", mem_size); 
+        println!("Sec Ptr: {:?}", sec_ptr.as_ptr()); 
 
-        let mem_size = Arena::alignment(sec_opt_ptr.as_mut_ptr(), DEFAULT_ALIGNMENT); 
-        println!("Mem size: {:?}", mem_size); 
-        println!("Mut Ptr: {:?}", sec_opt_ptr); 
+        let offset = unsafe {
+            (mem_size as *const u8).offset_from((sec_ptr.as_ptr() as *const u8))
+        };
+
+        println!("Offset: {}", offset); 
+
+        assert_eq!(offset, 9, "Alignment should add an additional 8 bytes"); 
     } 
 
     #[test] 
