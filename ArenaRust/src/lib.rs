@@ -11,9 +11,11 @@ const DEFAULT_ALIGNMENT: usize = std::mem
 
 struct Arena {
     ptr: *mut u8, 
+    prev_offset: usize, 
     offset: usize, 
     capacity: usize, 
 } 
+
 
 impl Arena {
     pub fn new() -> Self {
@@ -60,23 +62,77 @@ impl Arena {
     } 
 
 
-    pub fn alignment(ptr: *mut u8, alignment: usize) -> *mut u8{
+    pub fn alignment(
+        ptr: *mut u8, 
+        alignment: usize
+    ) -> *mut u8 {
        let mut ptr_addr = ptr as usize; 
-       println!("ptr mem: {:?}", ptr_addr); 
        let a = alignment; 
        let modulo = ptr_addr & (a - 1);  
-
-       println!("Modulo: {}", modulo);
 
        if modulo != 0 {
             ptr_addr += a - modulo; 
        } 
-       println!("ptr mem: {:?}", ptr_addr); 
 
-       unsafe {
-           return ptr_addr as *mut u8; 
+       return unsafe {
+           ptr_addr as *mut u8
        }
     } 
+
+    pub fn arena_resize(
+        &mut self, 
+        old_mem_ptr: *mut u8, 
+        prev_size: usize,
+        size: usize
+    ) -> Option<*mut [u8]> {
+        let curr_ptr = self.ptr as usize; 
+        let prev_mem_ptr = old_mem_ptr as usize;
+
+        if curr_ptr + self.offset + size < self.capacity {
+            return self.allocate_mem(size)
+        } else if curr_ptr <= prev_mem_ptr && curr_ptr + self.capacity > prev_mem_ptr { 
+            
+            if curr_ptr + self.prev_offset == prev_mem_ptr {
+                /* Start from the previous offset, since it's unused */ 
+                self.offset = self.prev_offset + size; 
+            
+                /* Check which size is bigger, if new size is bigger than prev size then we want to gain the difference space */ 
+                if prev_size < size {
+                    unsafe {
+                        std::ptr::write_bytes(self.ptr.add(self.offset), 0, size - prev_size);
+                    }
+                } 
+                    
+                let old_mem_fat_ptr = unsafe { std::ptr::slice_from_raw_parts_mut(old_mem_ptr, size) };
+
+                return Some(old_mem_fat_ptr)
+            } else {
+                /* Convert to raw pointer/thin pointer to update the size */ 
+                let ptr = match self.allocate_mem(size) {
+                    Some(ptr) => ptr as *mut u8, 
+                    None => panic!("Failed to allocate mem")
+                };
+
+                
+                
+                /* Choose the largest size between the current and prev size */ 
+                let largest_size = if size > prev_size {size} else {prev_size}; 
+               
+                /* New Fat Pointer is created */ 
+                let new_fat_ptr = unsafe {
+                    std::ptr::copy(old_mem_ptr, ptr, largest_size);
+                    std::ptr::slice_from_raw_parts_mut(ptr, largest_size)
+                };
+
+
+                return Some(new_fat_ptr)
+            }
+            
+        }
+
+        return None; 
+    }
+
 } 
 
 
