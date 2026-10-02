@@ -35,7 +35,13 @@ Arena alloc_arena() {
         exit(0); 
    }  
 
-   void *ptr = mmap(NULL, page_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0); 
+   void *ptr = mmap(
+        NULL, 
+        page_len, 
+        PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 
+        -1, 
+        0
+    ); 
    if (ptr == MAP_FAILED) {  
         printf("Error occured in sysconf"); 
         exit(0); 
@@ -62,12 +68,12 @@ void resize_map(Arena *self) {
    }  
 
    void *new_ptr = mmap(NULL, new_page_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0); 
-   if (ptr == MAP_FAILED) {  
+   if (new_ptr == MAP_FAILED) {  
         printf("Error occured in sysconf"); 
         exit(0); 
    } 
 
-   memove(new_ptr, self->ptr, self->capacity); 
+   memmove(new_ptr, self->ptr, self->capacity); 
 
    self->ptr = new_ptr; 
    self->capacity = new_page_len; 
@@ -130,15 +136,20 @@ void pop(Arena *self) {}
 
 void *arena_resize(Arena *self, void *old_mem, size_t prev_len, size_t len, size_t alignment) {
 
+    /* Check if prev mem has been initialized or prev_len*/
     if (old_mem == NULL || prev_len == 0) {
         return push(self, len, alignment); 
+    /* if self->ptr is less thean the old_mem and is greater than the ptr  */
     } else if (self->ptr <= old_mem && self->ptr + self->capacity > old_mem) {
 
         /* Checking whether the prev offset is equal to the old memory */ 
         if (self->ptr + self->prev_offset == old_mem) { 
             self->offset = self->prev_offset + len; 
         
-            /* if the len is greater than the previous allocated memory than expand by the difference */ 
+            /* 
+                if the new length is greater than the previous 
+                allocated memory than expand by the difference 
+            */ 
             if (len > prev_len)
                 memset(self->ptr + self->offset, 0, len - prev_len); 
 
@@ -147,9 +158,14 @@ void *arena_resize(Arena *self, void *old_mem, size_t prev_len, size_t len, size
             void *new_mem = push(self, len, alignment); 
             size_t copy_size = prev_len < len ? prev_len : len; 
             
+            /* 
+                Old memory is left behind and the new memory is updated with all the information from
+                old memory    
+            */
             memmove(new_mem, old_mem, copy_size); 
             return new_mem; 
        }  
+
     } else {
         perror("Issues resizing"); 
         return NULL;
@@ -176,25 +192,25 @@ void tests() {
 
     printf("Allocated Size: %zu \n", arena.offset); 
 
+    /* Check init */
     assert(arena.offset == 0); 
     assert(arena.capacity == (size_t)getpagesize());
 
-    printf("Memory location before pushing: %p \n", (void*)arena.ptr);
+    printf("Memory location before pushing first attempt: %p \n", (void*)arena.ptr);
     void* ptr_offset = push(&arena, 7, DEFAULT_ALIGNMENT); 
 
     assert((uintptr_t)ptr_offset % DEFAULT_ALIGNMENT == 0); 
 
-
-    printf("Memory location after pushing: %p \n", (void*)ptr_offset);
+    printf("Memory location after after attempt: %p \n", (void*)ptr_offset);
     printf("Allocated Size: %zu \n", arena.offset); 
 
     // Test 2 - Allocation of next 7 bytes
-    printf("Memory location before pushing: %p \n", (void*)arena.ptr);
+    printf("Memory location before second attempt: %p \n", (void*)arena.ptr);
     void* ptr_2_offset = push(&arena, 7, DEFAULT_ALIGNMENT); 
 
     assert((uintptr_t)ptr_2_offset % DEFAULT_ALIGNMENT == 0); 
 
-    printf("Memory location after pushing: %p \n", (void*)ptr_2_offset);
+    printf("Memory location after second attempt: %p \n", (void*)ptr_2_offset);
     printf("Allocated Size: %zu \n", arena.offset); 
 
     dealloc_arena(&arena); 
