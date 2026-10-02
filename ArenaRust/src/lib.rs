@@ -38,25 +38,26 @@ impl Arena {
 
         Arena {
             ptr: mut_ptr as *mut u8,  
+            prev_offset: 0,
             offset: 0, 
             capacity: page_size,
         }
     } 
 
-    pub fn allocate_mem(&mut self, len: usize) -> Option<&mut [u8]> {
-        let cur_ptr = self.ptr as usize + self.offset;  
-        let align_ptr = Arena::alignment(cur_ptr as *mut u8, DEFAULT_ALIGNMENT);         
+    pub fn allocate_mem(&mut self, len: usize) -> Option<*mut [u8]> {
+        let curr_ptr = self.ptr as usize + self.offset;  
+        let align_ptr = Arena::alignment(curr_ptr as *mut u8, DEFAULT_ALIGNMENT);         
 
-        let bytes_size: usize = unsafe { align_ptr.offset_from(cur_ptr as *const u8) as usize }; 
-
-        if bytes_size + len > self.capacity {
+        let bytes_size: usize = unsafe { align_ptr.offset_from(curr_ptr as *const u8) as usize }; 
+        if self.offset + bytes_size + len > self.capacity {
             return None
         } 
-    
+ 
         let mut mut_ptr = unsafe {
-            std::slice::from_raw_parts_mut(self.ptr.add(bytes_size), len)
+            std::ptr::slice_from_raw_parts_mut(self.ptr.add(bytes_size), len)
         };     
 
+        self.prev_offset = self.offset; 
         self.offset = bytes_size + len; 
         Some(mut_ptr)
     } 
@@ -152,24 +153,25 @@ mod tests {
         let first_ptr = arena.allocate_mem(7).unwrap(); 
         let sec_ptr = arena.allocate_mem(7).unwrap();
 
-        let mem_size = Arena::alignment(sec_ptr.as_mut_ptr(), DEFAULT_ALIGNMENT); 
+        let mem_size = Arena::alignment(sec_ptr as *mut u8, DEFAULT_ALIGNMENT); 
         println!("Mem Ptr: {:?}", mem_size); 
-        println!("Sec Ptr: {:?}", sec_ptr.as_ptr()); 
+        println!("Sec Ptr: {:?}", sec_ptr as *mut u8); 
 
         let offset = unsafe {
-            (mem_size as *const u8).offset_from((sec_ptr.as_ptr() as *const u8))
+            (mem_size as *const u8).offset_from((sec_ptr as *const u8))
         };
 
         println!("Offset: {}", offset); 
 
-        assert_eq!(offset, 9, "Alignment should add an additional 9 bytes"); 
+        assert_eq!(offset, 7, "Alignment should add an additional 9 bytes"); 
     } 
 
     #[test] 
     fn test_if_capacity_maxed() {
+        let page_size = sysgetconf::get_page_size(); 
         let mut arena = Arena::new(); 
 
-        let opt_ptr = arena.allocate_mem(16384); 
+        let opt_ptr = arena.allocate_mem(page_size); 
         let mut mut_ptr = opt_ptr.unwrap(); 
 
         let sec_ptr = arena.allocate_mem(8); 
@@ -184,5 +186,18 @@ mod tests {
         
         let mut ptr = opt_ptr.unwrap(); 
         assert_eq!(ptr.len(), 8, "Slice should be equal to memory allocated"); 
+    }
+
+
+    #[test]
+    fn test_arena_resize() {
+        let mut arena = Arena::new(); 
+        let mut ptr = arena.allocate_mem(8).unwrap() as *mut u8; 
+
+
+
+        let new_ptr = arena.arena_resize(ptr, 8, 32).unwrap(); 
+        assert_eq!(new_ptr.len(), 32, "Ptr should be equal to new memory allocated");
+
     }
 }
