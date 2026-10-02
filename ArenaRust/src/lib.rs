@@ -2,6 +2,7 @@ use std::ptr;
 use std::mem; 
 use memmap2::MmapMut; 
 use libc::{mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRITE, MAP_ANONYMOUS}; 
+use std::ffi::c_void; 
 
 mod sysgetconf;  
 mod dyn_mem;
@@ -136,6 +137,15 @@ impl Arena {
 
 } 
 
+impl Drop for Arena {
+    fn drop(&mut self) {
+        let success = unsafe { munmap(self.ptr as *mut c_void, self.capacity) };
+        if success != 0 {
+            eprintln!("Munmap dropping failure")
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -193,8 +203,6 @@ mod tests {
     fn test_arena_resize() {
         let mut arena = Arena::new(); 
         let mut ptr = arena.allocate_mem(8).unwrap() as *mut u8; 
-
-
 
         let new_ptr = arena.arena_resize(ptr, 8, 32).unwrap(); 
         assert_eq!(new_ptr.len(), 32, "Ptr should be equal to new memory allocated");
