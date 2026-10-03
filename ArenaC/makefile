@@ -1,1 +1,13 @@
-gcc -Wall -isysroot $(xcrun --show-sdk-path) -o Arena mremap Arena.c mremap.c
+CC = gcc 
+CFLAGS = -c -Wall 
+
+all: Arena
+
+Arena: Arena.o 	
+	$(CC) Arena.o -o Arena
+
+Arena.o: Arena.c 
+	$(CC) $(CFLAGS) Arena.c
+
+clean: 
+	rm -rf *.o
