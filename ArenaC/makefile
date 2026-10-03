@@ -1,0 +1,1 @@
+gcc -Wall -isysroot $(xcrun --show-sdk-path) -o Arena mremap Arena.c mremap.c

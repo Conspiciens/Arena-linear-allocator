@@ -10,6 +10,8 @@
 
 #include <assert.h>
 
+#include "mremap.c"
+
 /* https://www.gingerbill.org/article/2019/02/08/memory-allocation-strategies-002/ */
 
 /* 
@@ -18,6 +20,11 @@
 #ifndef DEFAULT_ALIGNMENT 
 #define DEFAULT_ALIGNMENT (2 * sizeof(void *))
 #endif 
+
+typedef struct {
+    void *ptr;
+    size_t size; 
+} FatPointer;  
 
 typedef struct {
     void *ptr; 
@@ -212,6 +219,18 @@ void tests() {
 
     printf("Memory location after second attempt: %p \n", (void*)ptr_2_offset);
     printf("Allocated Size: %zu \n", arena.offset); 
+
+
+    // Test 3 - Able to upgrade
+    int val = is_able_to_increase_size(arena.ptr, arena.capacity, 4128); 
+    printf("Able to increase?: %i\n", val);
+
+    void *ptr_resize = arena.ptr + arena.capacity + 2000; 
+    printf("New Ptr location: %p \n", ptr_resize); 
+    *(int *)ptr_resize = 20; 
+
+    printf("New Memory %i", *(int *)ptr_resize);
+
 
     dealloc_arena(&arena); 
 } 
