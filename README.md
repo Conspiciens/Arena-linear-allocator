@@ -25,7 +25,7 @@ They have most of the same functions
 16 bytes allows for SIMD (Single Intruction Multiple Data), which are listed below
 
 XMM registers are part of SSE (Streaming SIMD Extension) 
-XMM Registers 
+- XMM Registers 
     - 8 XMM registers non -64-bit modes 
     - 16 XMM registers in long mode (simultaneous)
         - 16 bytes
@@ -42,18 +42,17 @@ Also consider that the cache line reads every 64 bytes (We want to find within t
 
 ## <ins> Functions used <ins>
 mmap() 
-    - creates a new mapping in the virtual address space in the calling process 
-    
-    - Page-aligned address for addr
+- creates a new mapping in the virtual address space in the calling process 
 
-    - Macos: 16 kilobyte page
-    - linux: 4 kilobyte page
+- Page-aligned address for addr
 
-    - MAP_ANONYMOUS
-        - offset must be a multiple of the page_size
+- Macos: 16 kilobyte page
+- linux: 4 kilobyte page
 
-        - initialized using length bytes starting at the 
-        - offset in the file
+- MAP_ANONYMOUS
+    - offset must be a multiple of the page_size
+    - initialized using length bytes starting at the 
+    - offset in the file
 
             
     
