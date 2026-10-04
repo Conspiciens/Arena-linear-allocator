@@ -1,13 +1,13 @@
-## <ins> Linear Arena Implmentation (In C & Rust) <ins>
+## Linear Arena Implmentation (In C & Rust) 
 Implemented a simple Arena allocator in C/Rust with alignment (16 bytes alignement), with basic functionality
 with the assistance of https://www.gingerbill.org/article/2019/02/08/memory-allocation-strategies-002/ 
 
 
 > Note: Rust returns Fat Pointer to ensure there's a known size to compare
 
-ArenaC 
+- ArenaC 
     - Arena.c         
-ArenaRust 
+- ArenaRust 
     - ArenaRust
         - lib.rs
         - sysgetconf.rs 
@@ -21,7 +21,7 @@ They have most of the same functions
     - dealloc/drop
         
 
-## <ins> Reason for default alignment 16 bytes <ins>
+## Reason for default alignment 16 bytes
 16 bytes allows for SIMD (Single Intruction Multiple Data), which are listed below
 
 XMM registers are part of SSE (Streaming SIMD Extension) 
@@ -40,7 +40,7 @@ The equivalent in ARM is Neon
 Also consider that the cache line reads every 64 bytes (We want to find within that cache line)
 
 
-## <ins> Functions used <ins>
+## <Functions used 
 mmap() 
 - creates a new mapping in the virtual address space in the calling process 
 
