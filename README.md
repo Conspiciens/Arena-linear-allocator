@@ -6,11 +6,11 @@ with the assistance of https://www.gingerbill.org/article/2019/02/08/memory-allo
 > Note: Rust returns Fat Pointer to ensure there's a known size to compare
 
 ArenaC 
-    Arena.c         
+    - Arena.c         
 ArenaRust 
-    ArenaRust
-        lib.rs
-        sysgetconf.rs 
+    - ArenaRust
+        - lib.rs
+        - sysgetconf.rs 
 
 
 They have most of the same functions
@@ -26,14 +26,14 @@ They have most of the same functions
 
 XMM registers are part of SSE (Streaming SIMD Extension) 
 XMM Registers 
-    8 XMM registers non -64-bit modes 
-    16 XMM registers in long mode (simultaneous)
-        16 bytes
-        eight words 
-        four double words 
-        two quad words
-        four floats 
-        two doulbes 
+    - 8 XMM registers non -64-bit modes 
+    - 16 XMM registers in long mode (simultaneous)
+        - 16 bytes
+        - eight words 
+        - four double words 
+        - two quad words
+        - four floats 
+        - two doulbes 
 
 The equivalent in ARM is Neon        
 
@@ -42,18 +42,18 @@ Also consider that the cache line reads every 64 bytes (We want to find within t
 
 ## <ins> Functions used <ins>
 mmap() 
-    creates a new mapping in the virtual address space in the calling process 
+    - creates a new mapping in the virtual address space in the calling process 
     
-    Page-aligned address for addr
+    - Page-aligned address for addr
 
-    Macos: 16 kilobyte page
-    linux: 4 kilobyte page
+    - Macos: 16 kilobyte page
+    - linux: 4 kilobyte page
 
-    MAP_ANONYMOUS
-        offset must be a multiple of the page_size
+    - MAP_ANONYMOUS
+        - offset must be a multiple of the page_size
 
-        initialized using length bytes starting at the 
-        offset in the file
+        - initialized using length bytes starting at the 
+        - offset in the file
 
             
     
