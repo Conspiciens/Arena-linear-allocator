@@ -1,37 +1,10 @@
-#include <stdio.h> 
-#include <stdlib.h> 
-#include <string.h>
-#include <unistd.h> 
-#include <limits.h> 
-#include <sys/types.h> 
-#include <sys/mman.h> 
-#include <stddef.h> 
-#include <stdbool.h> 
-
-#include <assert.h>
-
-#include "mremap.c"
+#include "Arena.h"
 
 /* https://www.gingerbill.org/article/2019/02/08/memory-allocation-strategies-002/ */
 
 /* 
    16 bytes is the default alignment, a ptr in a 64 bit system is 8 bytes 
 */ 
-#ifndef DEFAULT_ALIGNMENT 
-#define DEFAULT_ALIGNMENT (2 * sizeof(void *))
-#endif 
-
-typedef struct {
-    void *ptr;
-    size_t size; 
-} FatPointer;  
-
-typedef struct {
-    void *ptr; 
-    size_t capacity; 
-    size_t prev_offset;
-    size_t offset;
-} Arena;  
 
 Arena alloc_arena() {
    int page_size = getpagesize(); 
@@ -139,7 +112,13 @@ void* push(Arena *self, size_t len, size_t alignment) {
     return ptr;  
 } 
 
-void pop(Arena *self) {} 
+void clear(Arena *self, size_t offset, size_t len) {
+    if ((uintptr_t)self->ptr + offset >= self->capacity) {
+        return; 
+    }
+
+    memset(self->ptr + offset, 0, len - offset); 
+} 
 
 void *arena_resize(Arena *self, void *old_mem, size_t prev_len, size_t len, size_t alignment) {
 
@@ -221,25 +200,7 @@ void tests() {
     printf("Allocated Size: %zu \n", arena.offset); 
 
 
-    // Test 3 - Able to upgrade
-    int val = is_able_to_increase_size(arena.ptr, arena.capacity, 4128); 
-    printf("Able to increase?: %i\n", val);
-
-    void *ptr_resize = arena.ptr + arena.capacity + 2000; 
-    printf("New Ptr location: %p \n", ptr_resize); 
-    *(int *)ptr_resize = 20; 
-
-    printf("New Memory %i", *(int *)ptr_resize);
-
-
     dealloc_arena(&arena); 
 } 
 
-void test_align_memory(Arena *self) {
-    
-} 
 
-int main(void) {
-    tests(); 
-    return 0; 
-} 
