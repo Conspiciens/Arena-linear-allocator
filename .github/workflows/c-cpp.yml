@@ -12,12 +12,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Enter Directory
-      run: cd ArenaC
-    - name: Run tests
-      run: make tests
-    - name: run binary
-      run: ./bin/tests
-    - name: clean up
-      run: make clean
+    - name: run tests for Arena in C 
+      working-direectory: ./ArenaC
+      run: 
+        make dir 
+        make tests
+        make cleanup
