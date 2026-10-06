@@ -22,8 +22,10 @@ jobs:
 
     - name: Create bin directory
       run: make dir 
-    - name: Run tests
+    - name: Compile Tests
       run: make tests 
+    - name: Run Tests Binary 
+      run: ./bin/tests
     - name: Cleanup all the obj & bin files
       run: make clean
 
