@@ -61,33 +61,42 @@ void resize_map(Arena *self) {
 
 /* We move the pointer to the next aligned memory addr */ 
 uintptr_t align_forward(uintptr_t ptr, size_t align) {
-    // 16 - 2 * 2 * 2 * 2
-    // 32 - 2 * 2 * 2 * 2 * 2
+    // assert(is_aligned_memory((uintptr_t)align) == true); 
 
-    // 17 % 2 == 1 
+    // uintptr_t a = (uintptr_t)align; 
+    // uintptr_t modulo = (uintptr_t)ptr & (a - 1);  
+    /* 
+        Example of how the logic works is pointed down below
 
-    assert(is_aligned_memory((uintptr_t)align) == true); 
+        Ex. 
+            ptr = 1 
+            alignment = 16 
 
-    uintptr_t a = (uintptr_t)align; 
-    uintptr_t modulo = (uintptr_t)ptr & (a - 1);  
+            00001 & 01111 = 00001 = 1 
+            16 - 1 = 15 
+
+            ptr += 15
+    */
+
+    
+    // if (modulo != 0) {
+    //     // 16 - bytes left to align to the next alignment of 16 bytes 
+    //     ptr += a - modulo;  
+    // } 
 
     /* 
-        I assume the size_t align means the byte boundary for the current architecture 
-        
-        align = 8  
-        ptr = 13
-        
-        reminder = 5
-    */ 
-    
-    if (modulo != 0) {
-        perror("Issues resizing"); 
-        // 16 - bytes left to align to the next alignment of 16 bytes 
-        ptr += a - modulo;  
-    } 
+        ptr = 1 
+        alignment = 16
 
-    /* return (ptr + align - 1) & ~(align - 1); Production type code */ 
-    return ptr; 
+        (1 + 15) & ~(15)
+
+        But also any bits before 15 is inverted therfore, it's really a large number if size_t it's probably 64 bits 
+        16 & 10000 = 1000 = 16, keeps any nums that are divisble by 16
+    */
+
+
+    return (ptr + align - 1) & ~(align - 1);  
+    // return ptr; 
 } 
 
 void* push(Arena *self, size_t len, size_t alignment) {
@@ -169,38 +178,6 @@ void dealloc_arena(Arena *self) {
     self->offset = 0; 
     self->prev_offset = 0; 
     self->capacity = 0; 
-} 
-
-void tests() {
-
-    // Test 1 - Allocation of first 7 bytes 
-    Arena arena = alloc_arena(); 
-
-    printf("Allocated Size: %zu \n", arena.offset); 
-
-    /* Check init */
-    assert(arena.offset == 0); 
-    assert(arena.capacity == (size_t)getpagesize());
-
-    printf("Memory location before pushing first attempt: %p \n", (void*)arena.ptr);
-    void* ptr_offset = push(&arena, 7, DEFAULT_ALIGNMENT); 
-
-    assert((uintptr_t)ptr_offset % DEFAULT_ALIGNMENT == 0); 
-
-    printf("Memory location after after attempt: %p \n", (void*)ptr_offset);
-    printf("Allocated Size: %zu \n", arena.offset); 
-
-    // Test 2 - Allocation of next 7 bytes
-    printf("Memory location before second attempt: %p \n", (void*)arena.ptr);
-    void* ptr_2_offset = push(&arena, 7, DEFAULT_ALIGNMENT); 
-
-    assert((uintptr_t)ptr_2_offset % DEFAULT_ALIGNMENT == 0); 
-
-    printf("Memory location after second attempt: %p \n", (void*)ptr_2_offset);
-    printf("Allocated Size: %zu \n", arena.offset); 
-
-
-    dealloc_arena(&arena); 
 } 
 
 
