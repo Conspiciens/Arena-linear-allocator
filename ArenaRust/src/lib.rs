@@ -5,7 +5,7 @@ use libc::{mmap, munmap, MAP_SHARED, PROT_READ, PROT_WRITE, MAP_ANONYMOUS};
 use std::ffi::c_void; 
 
 mod sysgetconf;  
-mod dyn_mem;
+// mod dyn_mem;
 
 const DEFAULT_ALIGNMENT: usize = std::mem
     ::size_of::<*const u8>() * 2; 
@@ -90,7 +90,7 @@ impl Arena {
         let curr_ptr = self.ptr as usize; 
         let prev_mem_ptr = old_mem_ptr as usize;
 
-        if curr_ptr + self.offset + size < self.capacity {
+        if old_mem_ptr.is_null() || self.prev_offset == 0 {
             return self.allocate_mem(size)
         } else if curr_ptr <= prev_mem_ptr && curr_ptr + self.capacity > prev_mem_ptr { 
             
@@ -200,12 +200,31 @@ mod tests {
 
 
     #[test]
-    fn test_arena_resize() {
+    fn test_arena_resize_next_to_mem() {
         let mut arena = Arena::new(); 
         let mut ptr = arena.allocate_mem(8).unwrap() as *mut u8; 
 
         let new_ptr = arena.arena_resize(ptr, 8, 32).unwrap(); 
         assert_eq!(new_ptr.len(), 32, "Ptr should be equal to new memory allocated");
+    }
 
+    #[test]
+    fn test_arena_resize_skip_mem_block() {
+        let mut arena = Arena::new(); 
+        let mut ptr = arena.allocate_mem(8).unwrap() as *mut u8; 
+
+        let mut move_ptr = ptr.wrapping_add(3); 
+        unsafe {
+            *move_ptr = 4; 
+        }
+
+        let mut ptr2 = arena.allocate_mem(8).unwrap() as *mut u8;
+        let mut resize_ptr = arena.arena_resize(ptr, 8, 32).unwrap() as *mut u8; 
+
+        
+        let mut check_ptr = resize_ptr.wrapping_add(3); 
+        unsafe {
+            assert_eq!(*check_ptr, 4, "The previous memory should be copied over");
+        }
     }
 }

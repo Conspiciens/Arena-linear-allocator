@@ -3,7 +3,7 @@ Implemented a simple Arena allocator in C/Rust with alignment (16 bytes aligneme
 with the assistance of https://www.gingerbill.org/article/2019/02/08/memory-allocation-strategies-002/ 
 
 
-> Note: Rust returns Fat Pointer to ensure there's a known size to compare
+> Note: Rust returns Fat Pointer to ensure there's a known size to compare, there's a C struct but haven't done anything with it yet!
 
 - ArenaC 
     - Arena.c         
@@ -13,7 +13,7 @@ with the assistance of https://www.gingerbill.org/article/2019/02/08/memory-allo
         - sysgetconf.rs 
 
 
-They have most of the same functions
+- They have most of the same functions
     - alloc_arena/new 
     - resize 
     - alignment 
@@ -40,7 +40,7 @@ The equivalent in ARM is Neon
 Also consider that the cache line reads every 64 bytes (We want to find within that cache line)
 
 
-## <Functions used 
+## Functions used 
 mmap() 
 - creates a new mapping in the virtual address space in the calling process 
 
