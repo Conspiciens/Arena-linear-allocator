@@ -70,5 +70,8 @@ int main() {
     test_alloc(); 
     test_resize_prev_mem();  
     test_resize_prev_mem_copy();
+    
+    printf("\n\033[0;32mAll checks have passed\033[0m ✅ ");
+
     return 0;
 }
